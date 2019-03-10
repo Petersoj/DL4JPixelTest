@@ -68,13 +68,16 @@ public class SampleDataGenerator {
                 break;
             case DIAGONAL:
                 featureArray[0] = clamp(similarPixelBase + random.nextDouble(-tinyPixelOffset, tinyPixelOffset), 0, 1);
-                featureArray[1] = clamp(random.nextDouble() +
-                        random.nextDouble(-similarPixelBase / 2, similarPixelBase / 2), 0, 1);
-                featureArray[2] = clamp(similarPixelBase + random.nextDouble(-tinyPixelOffset, tinyPixelOffset), 0, 1);
-                featureArray[3] = clamp(random.nextDouble() +
-                        random.nextDouble(-similarPixelBase / 2, similarPixelBase / 2), 0, 1);
+//                featureArray[1] = clamp(random.nextDouble() +
+//                        random.nextDouble(-similarPixelBase / 2, similarPixelBase / 2), 0, 1);
+                featureArray[1] = 0;
+//                featureArray[2] = clamp(random.nextDouble() +
+//                        random.nextDouble(-similarPixelBase / 2, similarPixelBase / 2), 0, 1);
+                featureArray[2] = 1;
+                featureArray[2] = 1;
+                featureArray[3] = clamp(similarPixelBase + random.nextDouble(-tinyPixelOffset, tinyPixelOffset), 0, 1);
 
-                // Perform raster row switching for half of the samples
+                // Perform raster diagonal switching for half of the samples
                 if (random.nextDouble() > 0.5d) {
                     double topLeftTemp = featureArray[0];
                     double topRightTemp = featureArray[1];
@@ -143,6 +146,15 @@ public class SampleDataGenerator {
 
         public int getOutputNeuronIndex() {
             return outputNeuronIndex;
+        }
+
+        public static SampleDirection fromNeuronIndex(int outputNeuronIndex) {
+            for (SampleDirection sampleDirection : values()) {
+                if (sampleDirection.getOutputNeuronIndex() == outputNeuronIndex) {
+                    return sampleDirection;
+                }
+            }
+            return null;
         }
     }
 }

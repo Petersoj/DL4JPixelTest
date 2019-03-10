@@ -4,13 +4,16 @@ import org.deeplearning4j.common.resources.DL4JResources;
 import org.deeplearning4j.common.resources.ResourceType;
 import org.deeplearning4j.datasets.iterator.INDArrayDataSetIterator;
 import org.deeplearning4j.datasets.iterator.impl.EmnistDataSetIterator;
+import org.deeplearning4j.nn.api.Model;
 import org.deeplearning4j.nn.api.OptimizationAlgorithm;
+import org.deeplearning4j.nn.conf.BackpropType;
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
 import org.deeplearning4j.nn.conf.layers.DenseLayer;
 import org.deeplearning4j.nn.conf.layers.OutputLayer;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.deeplearning4j.nn.weights.WeightInit;
+import org.deeplearning4j.optimize.api.BaseTrainingListener;
 import org.deeplearning4j.optimize.listeners.ScoreIterationListener;
 import org.nd4j.evaluation.classification.Evaluation;
 import org.nd4j.linalg.activations.Activation;
@@ -31,12 +34,12 @@ public class DL4JTest {
 
     public static void executeDirectionClassifier() throws Exception {
 
-//        PixelDisplay pixelDisplay = new PixelDisplay();
+//        PixelDisplay pixelDisplay2 = new PixelDisplay();
 //        int i2 = 6;
 //        while (i2 > 4) {
 //            Pair<INDArray, INDArray> testRaster =
-//                    SampleDataGenerator.generate2x2Sample(SampleDataGenerator.SampleDirection.HORIZONTAL);
-//            pixelDisplay.setGrayScaleRaster(testRaster.getKey());
+//                    SampleDataGenerator.generate2x2Sample(SampleDataGenerator.SampleDirection.UNKNOWN);
+//            pixelDisplay2.setGrayScaleRaster(testRaster.getKey());
 //            Thread.sleep(2000);
 //            for (int i = 0; i < 5; i++) {
 //                if (testRaster.getValue().getDouble(i) == 1D) {
@@ -45,6 +48,8 @@ public class DL4JTest {
 //                }
 //            }
 //        }
+
+        System.out.println("Generating Samples");
 
         int batchSize = 5_000;
 
@@ -66,41 +71,46 @@ public class DL4JTest {
         int imageLength = 2 * 2;
         MultiLayerConfiguration config = new NeuralNetConfiguration.Builder()
                 .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
-                .seed(123)
-                .l2(1e-4)
+                .l2(1e-8)
                 .list()
                 .layer(new DenseLayer.Builder()
                         .nIn(imageLength)
-                        .nOut(128)
-                        .activation(Activation.RELU)
-                        .weightInit(WeightInit.XAVIER)
-                        .build()
-                ).layer(new DenseLayer.Builder()
-                        .nIn(128)
-                        .nOut(5)
+                        .nOut(100)
                         .activation(Activation.RELU)
                         .weightInit(WeightInit.XAVIER)
                         .build()
                 ).layer(new OutputLayer.Builder(LossFunctions.LossFunction.NEGATIVELOGLIKELIHOOD)
-                        .nIn(5)
+                        .nIn(100)
                         .nOut(SampleDataGenerator.SampleDirection.values().length)
                         .activation(Activation.SOFTMAX)
                         .weightInit(WeightInit.XAVIER)
                         .build())
+                .backpropType(BackpropType.Standard)
                 .pretrain(false)
-                .backprop(true)
                 .build();
 
         // Construct Network
+        System.out.println("Constructing Network");
         MultiLayerNetwork network = new MultiLayerNetwork(config);
         network.init();
-        network.setListeners(new ScoreIterationListener(1));
+        network.addListeners(new BaseTrainingListener() {
+            private int printIterations = batchSize / 10;
+
+            @Override
+            public void iterationDone(Model model, int iteration, int epoch) {
+                if (iteration % printIterations == 0) {
+                    System.out.println("Iteration: " + iteration + " Epoch: " + epoch + " Score: " + model.score());
+                }
+            }
+        });
+//        network.addListeners(new ScoreIterationListener(10)); // THIS NOW WORKS WITH THE UPDATED POM.XML
+        network.printConfiguration();
 
         // Train network
-        System.out.println("Training network:");
-        network.fit(dataSetIteratorTrain, 5);
+        System.out.println("Training network");
+        network.fit(dataSetIteratorTrain, 20);
 
-        System.out.println("Evaluating network:");
+        System.out.println("Evaluating network");
         Evaluation eval = network.evaluate(dataSetIteratorTest);
         System.out.println(eval.stats());
 
@@ -109,9 +119,22 @@ public class DL4JTest {
         while (true) {
             Pair<INDArray, INDArray> testRaster = SampleDataGenerator.generate2x2Sample(null);
             pixelDisplay.setGrayScaleRaster(testRaster.getKey());
-            System.out.println("Expected: " + testRaster.getValue() +
-                    " Prediction: " + network.predict(testRaster.getKey())[0]);
-            Thread.sleep(2000);
+
+            INDArray expectedNDArray = testRaster.getValue();
+            SampleDataGenerator.SampleDirection expectedDirection = null;
+            for (int i = 0; i < expectedNDArray.length(); i++) {
+                if (expectedNDArray.getDouble(i) == 1D) {
+                    expectedDirection = SampleDataGenerator.SampleDirection.fromNeuronIndex(i);
+                    break;
+                }
+            }
+            System.out.println(
+                    "Expected: " +
+                            expectedDirection.name() +
+                            " Prediction: " +
+                            SampleDataGenerator.SampleDirection.fromNeuronIndex(
+                                    network.predict(testRaster.getKey())[0]).name());
+            Thread.sleep(2500);
         }
     }
 
