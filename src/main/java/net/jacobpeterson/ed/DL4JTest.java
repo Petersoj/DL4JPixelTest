@@ -24,7 +24,6 @@ import org.nd4j.linalg.primitives.Pair;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 public class DL4JTest {
 
@@ -39,7 +38,7 @@ public class DL4JTest {
 //        int i2 = 6;
 //        while (i2 > 4) {
 //            Pair<INDArray, INDArray> testRaster =
-//                    SampleDataGenerator.generate2x2Sample(SampleDataGenerator.SampleDirection.UNKNOWN);
+//                    SampleDataGenerator.generate2x2Sample(null);
 //            pixelDisplay2.setGrayScaleRaster(testRaster.getKey());
 //            Thread.sleep(2000);
 //            for (int i = 0; i < 5; i++) {
@@ -52,7 +51,7 @@ public class DL4JTest {
 
         System.out.println("Generating Samples");
 
-        int batchSize = 50_000;
+        int batchSize = 100_000;
 
         // Generate Training Data
         List<Pair<INDArray, INDArray>> trainList = new ArrayList<>();
@@ -72,31 +71,42 @@ public class DL4JTest {
         int imageLength = 2 * 2;
         MultiLayerConfiguration config = new NeuralNetConfiguration.Builder()
                 .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
-                .l2(1e-8)
+                .l2(1e-10)
                 .list()
                 .layer(new DenseLayer.Builder()
                         .nIn(imageLength)
-                        .nOut(4)
-                        .activation(Activation.RELU)
-                        .weightInit(WeightInit.XAVIER)
-                        .build()
-                ).layer(new DenseLayer.Builder()
-                        .nIn(4)
-                        .nOut(128)
-                        .activation(Activation.RELU)
-                        .weightInit(WeightInit.XAVIER)
-                        .build()
-                ).layer(new DenseLayer.Builder()
-                        .nIn(128)
-                        .nOut(5)
+                        .nOut(100)
                         .activation(Activation.RELU)
                         .weightInit(WeightInit.XAVIER)
                         .build()
                 ).layer(new OutputLayer.Builder(LossFunctions.LossFunction.NEGATIVELOGLIKELIHOOD)
-                        .nIn(5)
+                        .nIn(100)
                         .nOut(SampleDataGenerator.SampleDirection.values().length)
                         .activation(Activation.SOFTMAX)
                         .weightInit(WeightInit.XAVIER)
+//                .layer(new DenseLayer.Builder()
+//                        .nIn(imageLength)
+//                        .nOut(4)
+//                        .activation(Activation.RELU)
+//                        .weightInit(WeightInit.XAVIER)
+//                        .build()
+//                ).layer(new DenseLayer.Builder()
+//                        .nIn(4)
+//                        .nOut(128)
+//                        .activation(Activation.RELU)
+//                        .weightInit(WeightInit.XAVIER)
+//                        .build()
+//                ).layer(new DenseLayer.Builder()
+//                        .nIn(128)
+//                        .nOut(5)
+//                        .activation(Activation.RELU)
+//                        .weightInit(WeightInit.XAVIER)
+//                        .build()
+//                ).layer(new OutputLayer.Builder(LossFunctions.LossFunction.NEGATIVELOGLIKELIHOOD)
+//                        .nIn(5)
+//                        .nOut(SampleDataGenerator.SampleDirection.values().length)
+//                        .activation(Activation.SOFTMAX)
+//                        .weightInit(WeightInit.XAVIER)
                         .build())
                 .backpropType(BackpropType.Standard)
                 .pretrain(false)
@@ -123,9 +133,8 @@ public class DL4JTest {
         System.out.println("Training network");
         long currentTime = System.currentTimeMillis();
         network.fit(dataSetIteratorTrain, 5); // TRAIN NETWORK
-        System.out.println("Training took: " +
-                TimeUnit.SECONDS.convert((System.currentTimeMillis() - currentTime), TimeUnit.MILLISECONDS) + " " +
-                "seconds");
+        System.out.println("Training took: " + ((double) (System.currentTimeMillis() - currentTime) / 1000 / 60) + " " +
+                "minutes");
 
         System.out.println("Evaluating network");
         Evaluation eval = network.evaluate(dataSetIteratorTest);
@@ -148,7 +157,7 @@ public class DL4JTest {
             SampleDataGenerator.SampleDirection predictedDirection =
                     SampleDataGenerator.SampleDirection.fromNeuronIndex(network.predict(testRaster.getKey())[0]);
             System.out.println(
-                    "WORKED?: " + (predictedDirection.equals(expectedDirection) ? "Yes " : "No ") +
+                    "SAME?: " + (predictedDirection.equals(expectedDirection) ? "Yes " : "No ") +
                             "Expected: " + expectedDirection.name() +
                             " Prediction: " + predictedDirection.name()
             );

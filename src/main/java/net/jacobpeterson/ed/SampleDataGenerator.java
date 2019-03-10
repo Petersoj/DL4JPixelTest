@@ -30,11 +30,11 @@ public class SampleDataGenerator {
                 featureArray[0] = clamp(similarPixelBase + random.nextDouble(-tinyPixelOffset, tinyPixelOffset), 0, 1);
 //                featureArray[1] = clamp(random.nextDouble() +
 //                        random.nextDouble(-similarPixelBase / 3, similarPixelBase / 3), 0, 1);
-                featureArray[1] = random.nextDouble(0.33D);
+                featureArray[1] = random.nextDouble(0.3D);
                 featureArray[2] = clamp(similarPixelBase + random.nextDouble(-tinyPixelOffset, tinyPixelOffset), 0, 1);
 //                featureArray[3] = clamp(random.nextDouble() +
 //                        random.nextDouble(-similarPixelBase / 3, similarPixelBase / 3), 0, 1);
-                featureArray[3] = random.nextDouble(0.66D, 1D);
+                featureArray[3] = random.nextDouble(0.7D, 1D);
 
                 // Perform raster column switching for half of the samples
                 if (random.nextDouble() > 0.5d) {
