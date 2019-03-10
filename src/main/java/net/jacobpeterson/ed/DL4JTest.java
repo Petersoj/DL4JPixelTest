@@ -124,7 +124,7 @@ public class DL4JTest {
         long currentTime = System.currentTimeMillis();
         network.fit(dataSetIteratorTrain, 5); // TRAIN NETWORK
         System.out.println("Training took: " +
-                TimeUnit.MILLISECONDS.convert((System.currentTimeMillis() - currentTime), TimeUnit.SECONDS) + " " +
+                TimeUnit.SECONDS.convert((System.currentTimeMillis() - currentTime), TimeUnit.MILLISECONDS) + " " +
                 "seconds");
 
         System.out.println("Evaluating network");
