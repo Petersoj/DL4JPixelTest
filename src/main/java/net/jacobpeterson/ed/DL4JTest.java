@@ -51,7 +51,7 @@ public class DL4JTest {
 
         System.out.println("Generating Samples");
 
-        int batchSize = 5_000;
+        int batchSize = 100_000;
 
         // Generate Training Data
         List<Pair<INDArray, INDArray>> trainList = new ArrayList<>();
@@ -75,12 +75,24 @@ public class DL4JTest {
                 .list()
                 .layer(new DenseLayer.Builder()
                         .nIn(imageLength)
-                        .nOut(100)
+                        .nOut(4)
                         .activation(Activation.RELU)
                         .weightInit(WeightInit.XAVIER)
                         .build()
-                ).layer(new OutputLayer.Builder(LossFunctions.LossFunction.NEGATIVELOGLIKELIHOOD)
-                        .nIn(100)
+                ).layer(new DenseLayer.Builder()
+                        .nIn(4)
+                        .nOut(128)
+                        .activation(Activation.RELU)
+                        .weightInit(WeightInit.XAVIER)
+                        .build()
+                ).layer(new DenseLayer.Builder()
+                        .nIn(128)
+                        .nOut(5)
+                        .activation(Activation.RELU)
+                        .weightInit(WeightInit.XAVIER)
+                        .build()
+                ).layer(new OutputLayer.Builder(LossFunctions.LossFunction.RECONSTRUCTION_CROSSENTROPY)
+                        .nIn(5)
                         .nOut(SampleDataGenerator.SampleDirection.values().length)
                         .activation(Activation.SOFTMAX)
                         .weightInit(WeightInit.XAVIER)
@@ -108,7 +120,7 @@ public class DL4JTest {
 
         // Train network
         System.out.println("Training network");
-        network.fit(dataSetIteratorTrain, 20);
+        network.fit(dataSetIteratorTrain, 5);
 
         System.out.println("Evaluating network");
         Evaluation eval = network.evaluate(dataSetIteratorTest);
@@ -128,12 +140,13 @@ public class DL4JTest {
                     break;
                 }
             }
+            SampleDataGenerator.SampleDirection predictedDirection =
+                    SampleDataGenerator.SampleDirection.fromNeuronIndex(network.predict(testRaster.getKey())[0]);
             System.out.println(
-                    "Expected: " +
-                            expectedDirection.name() +
-                            " Prediction: " +
-                            SampleDataGenerator.SampleDirection.fromNeuronIndex(
-                                    network.predict(testRaster.getKey())[0]).name());
+                    "WORKED?: " + (predictedDirection.equals(expectedDirection) ? "Yes " : "No ") +
+                            "Expected: " + expectedDirection.name() +
+                            " Prediction: " + predictedDirection.name()
+            );
             Thread.sleep(2500);
         }
     }
