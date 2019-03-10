@@ -32,7 +32,7 @@ public class DL4JTest {
     public static void main(String[] args) throws Exception {
         File networkSaveFile = new File(System.getProperty("user.home"), "pixel_direction_nn");
 
-//        createAndTrainPixelDirectionNetwork(networkSaveFile);
+//        createAndTrainPixelDirectionNetwork(null);
         loadAndDisplayPixelDirectionNetwork(networkSaveFile);
     }
 
@@ -122,6 +122,22 @@ public class DL4JTest {
         MultiLayerNetwork network = ModelSerializer.restoreMultiLayerNetwork(networkSaveFile, true);
         System.out.println("Loaded network from: " + networkSaveFile.getAbsolutePath());
 
+        // Generate Testing Data
+        int testSampleSize = 50_000;
+        List<Pair<INDArray, INDArray>> testList = new ArrayList<>();
+        for (int i = 0; i < testSampleSize; i++) {
+            testList.add(SampleDataGenerator.generate2x2Sample(null));
+        }
+
+        // Create DataSet iterators for generated samples
+        INDArrayDataSetIterator dataSetIteratorTest = new INDArrayDataSetIterator(testList, 1);
+
+        System.out.println("Evaluating network");
+        // Evaluate Network
+        Evaluation eval = network.evaluate(dataSetIteratorTest);
+        System.out.println(eval.stats());
+
+        System.out.println("Executing intermittent testing and displaying");
         PixelDisplay pixelDisplay = new PixelDisplay();
         while (true) {
             Pair<INDArray, INDArray> testRaster = SampleDataGenerator.generate2x2Sample(null);
