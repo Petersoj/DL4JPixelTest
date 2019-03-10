@@ -24,6 +24,7 @@ import org.nd4j.linalg.primitives.Pair;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class DL4JTest {
 
@@ -51,7 +52,7 @@ public class DL4JTest {
 
         System.out.println("Generating Samples");
 
-        int batchSize = 100_000;
+        int batchSize = 50_000;
 
         // Generate Training Data
         List<Pair<INDArray, INDArray>> trainList = new ArrayList<>();
@@ -91,7 +92,7 @@ public class DL4JTest {
                         .activation(Activation.RELU)
                         .weightInit(WeightInit.XAVIER)
                         .build()
-                ).layer(new OutputLayer.Builder(LossFunctions.LossFunction.RECONSTRUCTION_CROSSENTROPY)
+                ).layer(new OutputLayer.Builder(LossFunctions.LossFunction.NEGATIVELOGLIKELIHOOD)
                         .nIn(5)
                         .nOut(SampleDataGenerator.SampleDirection.values().length)
                         .activation(Activation.SOFTMAX)
@@ -120,7 +121,11 @@ public class DL4JTest {
 
         // Train network
         System.out.println("Training network");
-        network.fit(dataSetIteratorTrain, 5);
+        long currentTime = System.currentTimeMillis();
+        network.fit(dataSetIteratorTrain, 5); // TRAIN NETWORK
+        System.out.println("Training took: " +
+                TimeUnit.MILLISECONDS.convert((System.currentTimeMillis() - currentTime), TimeUnit.SECONDS) + " " +
+                "seconds");
 
         System.out.println("Evaluating network");
         Evaluation eval = network.evaluate(dataSetIteratorTest);

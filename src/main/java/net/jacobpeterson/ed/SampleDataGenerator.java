@@ -23,7 +23,7 @@ public class SampleDataGenerator {
         double[] labelArray = new double[numberOfDirections]; // Label
 
         double tinyPixelOffset = 0.05;
-        double similarPixelBase = random.nextDouble();
+        double similarPixelBase = random.nextDouble(0.4D, 0.6D);
 
         switch (direction) {
             case VERTICAL:
