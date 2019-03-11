@@ -30,9 +30,9 @@ import java.util.List;
 public class DL4JTest {
 
     public static void main(String[] args) throws Exception {
-        File networkSaveFile = new File(System.getProperty("user.home"), "pixel_direction_nn");
+        File networkSaveFile = new File(System.getProperty("user.home"), ".pixel_direction_nn");
 
-//        createAndTrainPixelDirectionNetwork(null);
+//        createAndTrainPixelDirectionNetwork(networkSaveFile);
         loadAndDisplayPixelDirectionNetwork(networkSaveFile);
     }
 
@@ -55,8 +55,8 @@ public class DL4JTest {
         }
 
         // Create DataSet iterators for generated samples
-        INDArrayDataSetIterator dataSetIteratorTrain = new INDArrayDataSetIterator(trainList, 1);
-        INDArrayDataSetIterator dataSetIteratorTest = new INDArrayDataSetIterator(testList, 1);
+        INDArrayDataSetIterator dataSetIteratorTrain = new INDArrayDataSetIterator(trainList, 5);
+        INDArrayDataSetIterator dataSetIteratorTest = new INDArrayDataSetIterator(testList, 5);
 
         // Configure Hyperparameters for NN
         MultiLayerConfiguration config = new NeuralNetConfiguration.Builder()
@@ -94,6 +94,7 @@ public class DL4JTest {
                 }
             }
         });
+//        network.addListeners(new TimeIterationListener(2));
 //        network.addListeners(new ScoreIterationListener(10)); // THIS NOW WORKS WITH THE UPDATED POM.XML
 
 
@@ -107,9 +108,10 @@ public class DL4JTest {
         if (networkSaveFile != null) {
             if (networkSaveFile.exists()) {
                 System.out.println("Network Save File already exists! Not saving network to file.");
+            } else {
+                System.out.println("Saving Network to: " + networkSaveFile.getAbsolutePath());
+                network.save(networkSaveFile, true);
             }
-            System.out.println("Saving Network to: " + networkSaveFile.getAbsolutePath());
-            network.save(networkSaveFile, true);
         }
 
         System.out.println("Evaluating network");
